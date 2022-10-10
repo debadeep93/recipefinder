@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,8 +25,6 @@ import com.assessment.recipefinder.dto.IngredientDto;
 import com.assessment.recipefinder.dto.RecipeDto;
 import com.assessment.recipefinder.entities.Recipe;
 import com.assessment.recipefinder.entities.RecipeType;
-import com.assessment.recipefinder.repositories.IngredientRepository;
-import com.assessment.recipefinder.repositories.RecipeRepository;
 import com.assessment.recipefinder.service.RecipeService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 

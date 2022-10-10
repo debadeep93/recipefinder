@@ -29,11 +29,12 @@ public class RecipeServiceImpl implements RecipeService {
 	@Autowired
 	private IngredientRepository ingredientRepository;
 
+	
 	@Transactional
 	public Recipe addNewRecipe(RecipeDto dto) {
-
+		
 		Recipe recipe = new Recipe();
-
+		
 		recipe.setName(dto.getName());
 		recipe.setInstructions(dto.getInstructions());
 		recipe.setServes(dto.getServes());
@@ -50,14 +51,14 @@ public class RecipeServiceImpl implements RecipeService {
 
 			ingredientRepository.save(ingredient);
 		}
-
+		
 		return entity;
 	}
 
 	public List<Recipe> getRecipes(RecipeCriteria criteria) {
-
+		
 		RecipeSpecification spec = new RecipeSpecification(criteria);
-
+		
 		return recipeRepository.findAll(spec);
 	}
 
@@ -69,7 +70,7 @@ public class RecipeServiceImpl implements RecipeService {
 
 	@Transactional
 	public Recipe updateRecipe(Recipe entity, RecipeDto dto) {
-
+		
 		// TODO Auto-generated method stub
 		entity.setName(dto.getName());
 		entity.setInstructions(dto.getInstructions());
@@ -97,13 +98,14 @@ public class RecipeServiceImpl implements RecipeService {
 		return entity;
 	}
 
+	
 	@Transactional
 	public void deleteRecipe(Recipe entity) {
-
-		if (entity.getIngredients() != null && entity.getIngredients().size() > 0) {
+		
+		if(entity.getIngredients() != null && entity.getIngredients().size() > 0) {
 			ingredientRepository.deleteAll(entity.getIngredients());
 		}
-
+		
 		recipeRepository.delete(entity);
 	}
 
