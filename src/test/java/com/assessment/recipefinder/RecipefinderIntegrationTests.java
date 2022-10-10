@@ -34,18 +34,30 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @AutoConfigureMockMvc
-public class RecipefinderApplicationTests {
-	
+public class RecipefinderIntegrationTests {
+
 	@Autowired
 	private MockMvc mockMvc;
 	
 	@Autowired
 	private RecipeService recipeService;
 	
+	@Autowired
+	private RecipeRepository recipeRepository;
+	
+	@Autowired
+	private IngredientRepository ingredientRepository;
+	
 	private ObjectMapper objectMapper = new ObjectMapper();
 	
+	@AfterEach
+	private void clear() {
+		ingredientRepository.deleteAll();
+		recipeRepository.deleteAll();
+	}
+	
 	@Test
-	public void createNewRecipeIsSuccessful() throws Exception {
+	public void addingNewRecipe_thenGettingReturnsSuccess() throws Exception {
 		
 		List<IngredientDto> ingredients = new ArrayList<IngredientDto>();
 		ingredients.add(new IngredientDto("Chicken", "200g"));
@@ -63,63 +75,67 @@ public class RecipefinderApplicationTests {
 		
 		String[] location = result.getResponse().getHeader("location").split("/");
 		
-		Optional<Recipe> entity = recipeService.getRecipeById(Long.parseLong(location[location.length - 1].trim()));
-		
-		assertNotNull(entity);
-		assertThat(entity.get().getName()).isEqualTo(dto.getName());
-	}
-	
-	@Test
-	public void getRecipeByIdReturnsCorrectRecipe() throws Exception {
-		
-		addRecipe();
-		
-		MvcResult result = mockMvc.perform(get("/recipes/1", 42L)
+		/** GET BY ID */
+		MvcResult getResult = mockMvc.perform(get("/recipes/"+location[location.length - 1], 42L)
 	            .contentType("application/json"))
 	            .andExpect(status().isOk())
 	            .andReturn();
 		
-		Optional<Recipe> entity = recipeService.getRecipeById(1);
 		
-		String response = result.getResponse().getContentAsString();
+		String response = getResult.getResponse().getContentAsString();
 		
 		Recipe got = objectMapper.readValue(response, Recipe.class);
 		
 		assertNotNull(got);
-		assertThat(entity.get().getName()).isEqualTo(got.getName());
+		assertThat(got.getName()).isEqualTo(dto.getName());
 	}
 	
 	@Test
-	public void updateRecipeReturnsUpdatedValue() throws Exception {
+	public void deleteRecipe_thenGetReturnsNotFound() throws Exception {
 		
 		addRecipe();
+		long id = findFirstId();
 		
-		RecipeDto dto = new RecipeDto("Malai Kofta Curry", RecipeType.VEGETERIAN, null, 5, "Mix potatoes and ricotta and fry in hot oil. Add to curry.");
-		
-		 mockMvc.perform(put("/recipes/1", 42L)
-	            .contentType("application/json")
-	            .content(objectMapper.writeValueAsString(dto)))
-	            .andExpect(status().isAccepted());
-		
-		Optional<Recipe> entity = recipeService.getRecipeById(1);
-		
-		assertNotNull(entity);
-		assertThat(entity.get().getName()).isEqualTo(dto.getName());
-		assertThat(entity.get().getServes()).isEqualTo(dto.getServes());
-		
-	}
-	
-	@Test
-	public void deleteRecipeRemovesEntity() throws Exception {
-		
-		addRecipe();
-		
-		mockMvc.perform(delete("/recipes/1", 42L))
+		mockMvc.perform(delete("/recipes/"+id, 42L))
 	            .andExpect(status().isNoContent());
 		
-		Optional<Recipe> entity = recipeService.getRecipeById(1);
+		/** GET BY ID */
+		mockMvc.perform(get("/recipes/"+id, 42L)
+	            .contentType("application/json"))
+	            .andExpect(status().isNotFound());
+	}
+	
+	@Test
+	public void getAllRecipesReturnsAllResults() throws Exception {
+		addRecipes();
+		MvcResult result = mockMvc.perform(get("/recipes/", 42L)
+	            .contentType("application/json"))
+	            .andExpect(status().isOk())
+	            .andReturn();
 		
-		assertThat(entity.isEmpty()).isEqualTo(true);		
+		String response = result.getResponse().getContentAsString();
+		
+		List<Recipe> recipes = objectMapper.readValue(response, objectMapper.getTypeFactory().constructCollectionType(List.class, Recipe.class));
+		
+		assertThat(recipes.size()).isEqualTo(2);
+		
+	}
+	
+	@Test
+	public void filterByVegetarianTypeReturnsOnlyVegeterianRecipe() throws Exception {
+		addRecipes();
+		MvcResult result = mockMvc.perform(get("/recipes/", 42L)
+	            .contentType("application/json")
+	            .param("isVegeterian", "true"))
+	            .andExpect(status().isOk())
+	            .andReturn();
+		
+		String response = result.getResponse().getContentAsString();
+		
+		List<Recipe> recipes = objectMapper.readValue(response, objectMapper.getTypeFactory().constructCollectionType(List.class, Recipe.class));
+		
+		assertThat(recipes.size()).isEqualTo(1);
+		assertThat(recipes.get(0).getType()).isEqualTo(RecipeType.VEGETERIAN);
 	}
 	
 	private void addRecipe() throws Exception {
@@ -131,5 +147,28 @@ public class RecipefinderApplicationTests {
 		RecipeDto dto = new RecipeDto("Malai Kofta", RecipeType.VEGETERIAN, ingredients, 4, "Mix potatoes and ricotta and fry in hot oil.");
 		
 		recipeService.addNewRecipe(dto);
+	}
+	
+	private void addRecipes() throws Exception {
+		List<IngredientDto> i1 = new ArrayList<IngredientDto>();
+		i1.add(new IngredientDto("Chicken", "200g"));
+		i1.add(new IngredientDto("Butter", "50 g"));
+		i1.add(new IngredientDto("Onions", "2 medium"));
+		i1.add(new IngredientDto("Assorted spices", "NA"));
+		
+		List<IngredientDto> i2 = new ArrayList<IngredientDto>();
+		i2.add(new IngredientDto("Ricotta", "1 cup"));
+		i2.add(new IngredientDto("Mashed Potatoes", "1 cup"));
+		i2.add(new IngredientDto("Oil", "4 tbsp"));
+		
+		RecipeDto r1 = new RecipeDto("Chicken Butter Masala", RecipeType.NON_VEGETARIAN, i1, 3, "Fry chicken with butter. Make curry with onions and spices. Mix.");
+		RecipeDto r2 = new RecipeDto("Malai Kofta", RecipeType.VEGETERIAN, i2, 4, "Mix potatoes and ricotta and fry in hot oil.");
+		
+		recipeService.addNewRecipe(r1);
+		recipeService.addNewRecipe(r2);
+	}
+	
+	private Long findFirstId() throws Exception {
+		return recipeRepository.findAll().get(0).getId();
 	}
 }

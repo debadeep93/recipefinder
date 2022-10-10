@@ -15,12 +15,14 @@ import javax.persistence.Table;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
 @Getter
 @Setter
 @EqualsAndHashCode
+@RequiredArgsConstructor
 @ToString
 @Entity
 @Table(name = "recipes")

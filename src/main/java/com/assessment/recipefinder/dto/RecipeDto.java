@@ -8,12 +8,14 @@ import com.assessment.recipefinder.entities.RecipeType;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
 @Getter
 @Setter
 @EqualsAndHashCode
+@RequiredArgsConstructor
 @ToString
 @Component
 public class RecipeDto {
@@ -27,5 +29,13 @@ public class RecipeDto {
 	private Integer serves;
 
 	private String instructions;
+	
+	public RecipeDto(String name, RecipeType type, List<IngredientDto> ingredients, Integer serves, String instructions) {
+		this.name = name;
+		this.type = type;
+		this.ingredients = ingredients;
+		this.serves = serves;
+		this.instructions = instructions;
+	}
 
 }
