@@ -23,6 +23,8 @@ import com.assessment.recipefinder.entities.Recipe;
 import com.assessment.recipefinder.service.RecipeService;
 import com.assessment.recipefinder.util.RecipeCriteria;
 
+import io.swagger.v3.oas.annotations.Operation;
+
 @RestController
 @RequestMapping("recipes")
 public class RecipeController {
@@ -30,6 +32,7 @@ public class RecipeController {
 	@Autowired
 	private RecipeService recipeService;
 
+	@Operation(summary = "Get a list of recipes based on params.")
 	@GetMapping("/")
 	public List<Recipe> getRecipes(
 			@RequestParam Optional<Integer> numberOfServings,
@@ -44,6 +47,7 @@ public class RecipeController {
 		return recipeService.getRecipes(filter);
 	}
 	
+	@Operation(summary = "Get a recipe by id.")
 	@GetMapping("/{id}")
 	public ResponseEntity<Recipe> getRecipeById(@PathVariable long id) {
 		
@@ -56,6 +60,7 @@ public class RecipeController {
 		return ResponseEntity.ok(entity.get());
 	}
 	
+	@Operation(summary = "Adds a new recipe and returns the location in header.")
 	@PostMapping("/")
 	public ResponseEntity<Recipe> addRecipe(@RequestBody RecipeDto recipe) {
 		Recipe entity = recipeService.addNewRecipe(recipe);
@@ -66,6 +71,7 @@ public class RecipeController {
 		return ResponseEntity.created(location).build();
 	}
 	
+	@Operation(summary = "Update a recipe by its id.")
 	@PutMapping("/{id}")
 	public ResponseEntity<Recipe> updateRecipe(@RequestBody RecipeDto recipe, @PathVariable long id){
 		
@@ -80,6 +86,7 @@ public class RecipeController {
 		return ResponseEntity.accepted().build();
 	}
 	
+	@Operation(summary = "Removes the recipe.")
 	@DeleteMapping("/{id}")
 	public ResponseEntity<Object> deleteRecipe(@PathVariable long id){
 		
